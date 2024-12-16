@@ -68,9 +68,9 @@ const TodoItem = (props) => {
               onChange={handlePriorityChange}
               className={styles.prioritySelect}
           >
-            <option value="hoch">Hoch</option>
-            <option value="mittel">Mittel</option>
-            <option value="niedrig">Niedrig</option>
+            <option value="1">Hoch</option>
+            <option value="2">Mittel</option>
+            <option value="3">Niedrig</option>
           </select>
         </div>
         <input
