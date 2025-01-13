@@ -1,6 +1,5 @@
-/* eslint react/prop-types: 0 */
 import { useState, useEffect } from "react";
-import { FaTrash } from "react-icons/fa";
+import { FaTrash, FaInfoCircle } from "react-icons/fa";
 import styles from "./TodoItem.module.css";
 
 const TodoItem = (props) => {
@@ -34,15 +33,22 @@ const TodoItem = (props) => {
     editMode.display = "none";
   }
 
-  useEffect(
-      () => () => {
-        console.log("Cleaning up...");
-      },
-      []
-  );
+  useEffect(() => {
+    return () => {
+      console.log("Cleaning up...");
+    };
+  }, []);
 
   const handlePriorityChange = (e) => {
     props.setPriority(id, e.target.value);
+  };
+
+  const handleDetailView = () => {
+    if (props.openDetailView) {
+      props.openDetailView(props.todo);
+    } else {
+      console.error("openDetailView ist nicht definiert");
+    }
   };
 
 
@@ -60,7 +66,13 @@ const TodoItem = (props) => {
               data-set="delete-todo-btn"
               onClick={() => props.deleteTodoProps(id)}
           >
-            <FaTrash style={{color: "orangered", fontSize: "16px"}}/>
+            <FaTrash style={{ color: "orangered", fontSize: "16px" }} />
+          </button>
+          <button
+              data-set="detail-view-btn"
+              onClick={handleDetailView}
+          >
+            <FaInfoCircle style={{ color: "blue", fontSize: "16px" }} />
           </button>
           <span style={completed ? completedStyle : null}>{title}</span>
           <select

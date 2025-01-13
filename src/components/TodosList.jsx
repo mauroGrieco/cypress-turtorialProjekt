@@ -11,6 +11,7 @@ const TodosList = (props) => (
         deleteTodoProps={props.deleteTodoProps}
         setUpdate={props.setUpdate}
         setPriority={props.setPriority}
+        openDetailView={props.openDetailView}
       />
     ))}
   </ul>

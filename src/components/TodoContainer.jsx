@@ -1,95 +1,116 @@
 import { useState, useEffect } from "react";
-import { v4 as uuidv4 } from "uuid";
 import Header from "./Header";
 import InputTodo from "./InputTodo";
 import TodosList from "./TodosList";
+import TodoDetail from "./TodoDetail";
 import styles from "./TodoContainer.module.css";
+import { getTodos, createTodo, deleteTodo, updateTodo } from "../api/todoService";
 
 const TodoContainer = () => {
-    const getInitialTodos = () => {
-        const temp = localStorage.getItem("todos");
-        const savedTodos = JSON.parse(temp);
-        return savedTodos || [];
-    };
-
-    const [todos, setTodos] = useState(getInitialTodos());
+    const [todos, setTodos] = useState([]);
     const [sortOrder, setSortOrder] = useState("none");
+    const [selectedTodo, setSelectedTodo] = useState(null);
 
-    const handleChange = (id) => {
-        setTodos((prevState) =>
-            prevState.map((todo) => {
-                if (todo.id === id) {
-                    return {
-                        ...todo,
-                        completed: !todo.completed,
-                    };
-                }
-                return todo;
-            })
-        );
+    // Todos vom Backend laden
+    useEffect(() => {
+        fetchTodos();
+    }, []);
+
+    const fetchTodos = async () => {
+        try {
+            const data = await getTodos();
+            setTodos(data);
+        } catch (error) {
+            console.error("Fehler beim Laden der Todos:", error);
+        }
     };
 
-    const delTodo = (id) => {
-        setTodos([...todos.filter((todo) => todo.id !== id)]);
+    // Neues Todo hinzufügen
+    const addTodoItem = async (title, priority, category) => {
+        const newTodo = { title, priority: parseInt(priority, 10), category, completed: false };
+        try {
+            const savedTodo = await createTodo(newTodo);
+            setTodos([...todos, savedTodo]);
+        } catch (error) {
+            console.error("Fehler beim Erstellen des Todos:", error);
+        }
     };
 
-    const addTodoItem = (title, priority) => {
-        const newTodo = {
-            id: uuidv4(),
-            title,
-            priority,
-            completed: false,
-        };
-        setTodos([...todos, newTodo]);
+    // Todo löschen
+    const delTodo = async (id) => {
+        try {
+            await deleteTodo(id);
+            setTodos(todos.filter((todo) => todo.id !== id));
+        } catch (error) {
+            console.error("Fehler beim Löschen des Todos:", error);
+        }
     };
 
-    const setUpdate = (updatedTitle, id) => {
-        setTodos(
-            todos.map((todo) => {
-                if (todo.id === id) {
-                    todo.title = updatedTitle;
-                }
-                return todo;
-            })
-        );
+    // Todo abschließen (toggle completed)
+    const handleChange = async (id) => {
+        const todoToUpdate = todos.find((todo) => todo.id === id);
+        const updatedTodo = { ...todoToUpdate, completed: !todoToUpdate.completed };
+        try {
+            await updateTodo(updatedTodo);
+            setTodos(todos.map((todo) => (todo.id === id ? updatedTodo : todo)));
+        } catch (error) {
+            console.error("Fehler beim Aktualisieren des Todos:", error);
+        }
     };
 
-    const setPriority = (id, priority) => {
-        setTodos(
-            todos.map((todo) => {
-                if (todo.id === id) {
-                    todo.priority = priority;
-                }
-                return todo;
-            })
-        );
+    // Titel des Todos aktualisieren
+    const setUpdate = async (updatedTitle, id) => {
+        const todoToUpdate = todos.find((todo) => todo.id === id);
+        const updatedTodo = { ...todoToUpdate, title: updatedTitle };
+        try {
+            await updateTodo(updatedTodo);
+            setTodos(todos.map((todo) => (todo.id === id ? updatedTodo : todo)));
+        } catch (error) {
+            console.error("Fehler beim Aktualisieren des Titels:", error);
+        }
     };
 
+    // Priorität des Todos aktualisieren
+    const setPriority = async (id, priority) => {
+        const todoToUpdate = todos.find((todo) => todo.id === id);
+        const updatedTodo = { ...todoToUpdate, priority };
+        try {
+            await updateTodo(updatedTodo);
+            setTodos(todos.map((todo) => (todo.id === id ? updatedTodo : todo)));
+        } catch (error) {
+            console.error("Fehler beim Aktualisieren der Priorität:", error);
+        }
+    };
+
+    // Sortierung ändern
     const handleSortChange = (e) => {
         setSortOrder(e.target.value);
     };
 
+    // Todos nach Priorität sortieren
     const getSortedTodos = () => {
         if (sortOrder === "none") return todos;
-        return [...todos].sort((a, b) => a.priority - b.priority);
+
+        return [...todos].sort((a, b) => {
+            if (sortOrder === "asc") return a.priority - b.priority;
+            if (sortOrder === "desc") return b.priority - a.priority;
+            return 0;
+        });
     };
 
-    useEffect(() => {
-        const temp = JSON.stringify(todos);
-        localStorage.setItem("todos", temp);
-    }, [todos]);
+    const openDetailView = (todo) => setSelectedTodo(todo);
+    const closeDetailView = () => setSelectedTodo(null);
 
     return (
         <div className={styles.inner}>
             <Header />
-            <InputTodo addTodoProps={(title, priority) => addTodoItem(title, priority)} />
+            <InputTodo addTodoProps={addTodoItem} />
             <div>
                 <label>Sortiere nach Priorität: </label>
                 <select value={sortOrder} onChange={handleSortChange}>
-                    <option value="none">Keine</option>
-                    <option value={1}>Hoch</option>
-                    <option value={2}>Mittel</option>
-                    <option value={3}>Niedrig</option>
+                    <option value="none">Keine Sortierung</option>
+                    <option value="asc">Priorität aufsteigend</option>
+                    <option value="desc">Priorität absteigend</option>
                 </select>
             </div>
             <TodosList
@@ -98,7 +119,9 @@ const TodoContainer = () => {
                 deleteTodoProps={delTodo}
                 setUpdate={setUpdate}
                 setPriority={setPriority}
+                openDetailView={openDetailView}
             />
+            {selectedTodo && <TodoDetail todo={selectedTodo} onClose={closeDetailView} />}
         </div>
     );
 };

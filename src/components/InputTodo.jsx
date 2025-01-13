@@ -1,12 +1,15 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { FaPlusCircle } from "react-icons/fa";
 
 const InputTodo = (props) => {
   const [inputText, setInputText] = useState({
     title: "",
-    priority: "middle",
+    priority: "2",
+    category: "",
   });
+
+  const categories = ["Work", "Personal", "Shopping", "Others"];
 
   const onChange = (e) => {
     setInputText({
@@ -23,10 +26,11 @@ const InputTodo = (props) => {
         middle: 2,
         low: 3,
       };
-      props.addTodoProps(inputText.title, priorityMap[inputText.priority]);
+      props.addTodoProps(inputText.title, priorityMap[inputText.priority], inputText.category);
       setInputText({
         title: "",
         priority: "middle",
+        category: "",
       });
     } else {
       alert("Please write item");
@@ -56,6 +60,18 @@ const InputTodo = (props) => {
           <option value="high">Hoch</option>
           <option value="middle">Mittel</option>
           <option value="low">Niedrig</option>
+        </select>
+        <select
+            name="category"
+            value={inputText.category}
+            onChange={onChange}
+            className="input-category"
+        >
+          {categories.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
+          ))}
         </select>
         <button data-set="add-todo-btn" className="input-submit">
           <FaPlusCircle />
