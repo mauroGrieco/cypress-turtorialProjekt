@@ -1,3 +1,4 @@
+# Update the Node.js version in the CI pipeline to a version that supports the nullish coalescing assignment operator (>= 15.0.0)
 name: CI/CD Pipeline
 
 on: [push]
@@ -15,7 +16,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '14'
+          node-version: '16'  # Update to a version that supports the nullish coalescing assignment operator
 
       # Install project dependencies
       - name: Install dependencies
@@ -42,7 +43,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '14'
+          node-version: '16'  # Update to a version that supports the nullish coalescing assignment operator
 
       # Install project dependencies
       - name: Install dependencies
