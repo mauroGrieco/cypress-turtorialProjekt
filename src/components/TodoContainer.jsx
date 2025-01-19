@@ -10,6 +10,7 @@ const TodoContainer = () => {
     const [todos, setTodos] = useState([]);
     const [sortOrder, setSortOrder] = useState("none");
     const [selectedTodo, setSelectedTodo] = useState(null);
+    const [editTodo, setEditTodo] = useState({ title: "", priority: "", category: "", completed: false });
 
     // Todos vom Backend laden
     useEffect(() => {
@@ -25,7 +26,6 @@ const TodoContainer = () => {
         }
     };
 
-    // Neues Todo hinzufügen
     const addTodoItem = async (title, priority, category) => {
         const newTodo = { title, priority: parseInt(priority, 10), category, completed: false };
         try {
@@ -36,17 +36,14 @@ const TodoContainer = () => {
         }
     };
 
-    // Todo löschen
     const delTodo = async (id) => {
         try {
             await deleteTodo(id);
             setTodos(todos.filter((todo) => todo.id !== id));
-        } catch (error) {
-            console.error("Fehler beim Löschen des Todos:", error);
+        } catch (error) {            console.error("Fehler beim Löschen des Todos:", error);
         }
     };
 
-    // Todo abschließen (toggle completed)
     const handleChange = async (id) => {
         const todoToUpdate = todos.find((todo) => todo.id === id);
         const updatedTodo = { ...todoToUpdate, completed: !todoToUpdate.completed };
@@ -58,36 +55,31 @@ const TodoContainer = () => {
         }
     };
 
-    // Titel des Todos aktualisieren
-    const setUpdate = async (updatedTitle, id) => {
-        const todoToUpdate = todos.find((todo) => todo.id === id);
-        const updatedTodo = { ...todoToUpdate, title: updatedTitle };
+    const handleEditChange = (field, value) => {
+        setEditTodo({ ...editTodo, [field]: value });
+    };
+
+    const saveChanges = async () => {
         try {
-            await updateTodo(updatedTodo);
-            setTodos(todos.map((todo) => (todo.id === id ? updatedTodo : todo)));
+            await updateTodo(editTodo);
+            fetchTodos();
+            setSelectedTodo(null);
         } catch (error) {
-            console.error("Fehler beim Aktualisieren des Titels:", error);
+            console.error("Fehler beim Speichern der Änderungen:", error);
         }
     };
 
-    // Priorität des Todos aktualisieren
-    const setPriority = async (id, priority) => {
-        const todoToUpdate = todos.find((todo) => todo.id === id);
-        const updatedTodo = { ...todoToUpdate, priority };
-        try {
-            await updateTodo(updatedTodo);
-            setTodos(todos.map((todo) => (todo.id === id ? updatedTodo : todo)));
-        } catch (error) {
-            console.error("Fehler beim Aktualisieren der Priorität:", error);
-        }
+    const openDetailView = (todo) => {
+        setSelectedTodo(todo);
+        setEditTodo(todo);
     };
 
-    // Sortierung ändern
+    const closeDetailView = () => setSelectedTodo(null);
+
     const handleSortChange = (e) => {
         setSortOrder(e.target.value);
     };
 
-    // Todos nach Priorität sortieren
     const getSortedTodos = () => {
         if (sortOrder === "none") return todos;
 
@@ -97,9 +89,6 @@ const TodoContainer = () => {
             return 0;
         });
     };
-
-    const openDetailView = (todo) => setSelectedTodo(todo);
-    const closeDetailView = () => setSelectedTodo(null);
 
     return (
         <div className={styles.inner}>
@@ -117,11 +106,23 @@ const TodoContainer = () => {
                 todos={getSortedTodos()}
                 handleChangeProps={handleChange}
                 deleteTodoProps={delTodo}
-                setUpdate={setUpdate}
-                setPriority={setPriority}
                 openDetailView={openDetailView}
             />
-            {selectedTodo && <TodoDetail todo={selectedTodo} onClose={closeDetailView} />}
+            {selectedTodo && (
+                <div className={styles.modal}>
+                    <h2>Todo Details bearbeiten</h2>
+                    <label>Title:</label>
+                    <input type="text" value={editTodo.title} onChange={(e) => handleEditChange("title", e.target.value)} />
+                    <label>Priority:</label>
+                    <input type="number" value={editTodo.priority} onChange={(e) => handleEditChange("priority", e.target.value)} />
+                    <label>Category:</label>
+                    <input type="text" value={editTodo.category} onChange={(e) => handleEditChange("category", e.target.value)} />
+                    <label>Completed:</label>
+                    <input type="checkbox" checked={editTodo.completed} onChange={(e) => handleEditChange("completed", e.target.checked)} />
+                    <button onClick={saveChanges}>Speichern</button>
+                    <button onClick={closeDetailView}>Schließen</button>
+                </div>
+            )}
         </div>
     );
 };
