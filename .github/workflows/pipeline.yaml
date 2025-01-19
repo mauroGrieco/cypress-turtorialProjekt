@@ -7,20 +7,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Checkout the repository
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      # Set up Node.js environment
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
           node-version: '14'
 
+      # Install project dependencies
       - name: Install dependencies
         run: npm install
 
+      # Run linter to check for code style and syntax errors
       - name: Run linter
         run: npm run lint
 
+      # Build the project
       - name: Build project
         run: npm run build
 
@@ -29,23 +34,29 @@ jobs:
     needs: build
 
     steps:
+      # Checkout the repository
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      # Set up Node.js environment
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
           node-version: '14'
 
+      # Install project dependencies
       - name: Install dependencies
         run: npm install
 
+      # Run unit and integration tests with coverage
       - name: Run unit and integration tests
         run: npm test -- --coverage
 
+      # Run Cypress end-to-end tests
       - name: Run Cypress tests
         run: npm run cypress:run
 
+      # Check test coverage and ensure it meets the threshold
       - name: Check test coverage
         run: |
           COVERAGE=$(npx jest --coverage --coverageReporters=text-summary | grep 'All files' | awk '{print $4}' | sed 's/%//')
@@ -53,6 +64,7 @@ jobs:
             echo "Test coverage is below 80%"
             exit 1
 
+      # Upload test results as artifacts
       - name: Upload test results
         uses: actions/upload-artifact@v2
         with:
@@ -64,9 +76,11 @@ jobs:
     needs: test
 
     steps:
+      # Checkout the repository
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      # Deploy to staging environment
       - name: Deploy to staging
         run: echo "Deploying to staging environment..."
         env:
@@ -77,6 +91,7 @@ jobs:
     needs: [build, test, deploy]
 
     steps:
+      # Notify on failure
       - name: Notify on failure
         if: failure()
         run: echo "Build or tests failed. Please check the logs for details."
